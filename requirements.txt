@@ -1,0 +1,15 @@
+requests
+colorama
+wafw00f
+requests
+pyfiglet
+colorama
+ast
+regex
+requests
+dnspython
+simplejson
+ip2geotools
+ipwhois
+wafw00f
+graphviz
