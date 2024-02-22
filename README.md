@@ -6,7 +6,7 @@ Projecr Wing Cyber
 ### What's New?
 
 
-
+wdwd
 ### FEATURES
 
 
@@ -14,9 +14,9 @@ Projecr Wing Cyber
 ### I N S T A L L A T I O N
 
 ```
-1. Clone the repository: git clone 
-2. Install the requirements file: pip3 install -r requirements
-3. Run the arachnet.py file
+1. Clone the repository: git clone https://github.com/MLSAKIIT/Arachnet.git
+2. Install the requirements file: pip3 install -r requirements.txt
+3. Run the arachnet.sh file
 ```
 
 ### USAGE
