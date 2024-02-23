@@ -4,7 +4,6 @@ Projecr Wing Cyber
 ![alt_text](mlsa.png)
 
 ### What's New?
-adawda
 
 
 ### FEATURES

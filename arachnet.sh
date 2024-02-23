@@ -8,7 +8,7 @@ enumerate() {
     clear
     echo "Enumerate selected"
     mkdir -p dump
-    python3 dnsdumpster/dnsdumpster.py -d $domain > dump/output_$domain.txt 
+    python3 DnsDumpster/main.py -u $domain > dump/output_$domain.txt 
     printf "Enumerated output after running dnsdumpster\n"
     python3 seg.py $domain
     clear
