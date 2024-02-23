@@ -2,7 +2,6 @@ import aiohttp
 import asyncio
 
 class DnsDumpsterClient:
-    domain = None
     def __init__(self, domain):
         self.url = 'https://dnsdumpster.com/'
         self.headers = {
