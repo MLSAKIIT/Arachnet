@@ -65,7 +65,7 @@ vuln_scan() {
                 2)
                     while IFS= read -r ip
                     do
-                        nmap $ip >> enum/ip.txt
+                        nmap -sS -p- -sV -O $ip >> enum/ip.txt
                     done < ip.txt
                     ;;
                 *)
