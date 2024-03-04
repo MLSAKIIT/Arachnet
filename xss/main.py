@@ -119,7 +119,46 @@ class Main:
     Raises:
         subprocess.CalledProcessError: If the Katana command fails.
     """
+    
+	# Function to check if Katana is installed
+	def check_katana_installed():
+		try:
+		# Check if Katana is installed
+		subprocess.run(["katana", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+		return True
+	except subprocess.CalledProcessError:
+		return False
+	
+	# Function to install Katana
+	def install_katana():
+		try:
+		# Install Katana (example command, replace with actual installation command)
+		subprocess.run(["go", "install", "github.com/projectdiscovery/katana/cmd/katana@latest"], check=True)
+		
+		# Copy katana to /bin/ directory
+		subprocess.run(["sudo", "cp", "~/go/bin/katana", "/bin/"], check=True)
+		
+		print("Katana installed successfully.")
+	except subprocess.CalledProcessError as e:
+		print(f"Error installing Katana: {e}")
+            sys.exit(1)
+   
+    
+	try:
+	# Check if Katana is installed
+	if not check_katana_installed():
+		print(Fore.RED + "[-] Katana is not installed. Installing Katana...")
+		install_katana()
 
+        	# Define the command to execute Katana for crawling
+        	command = f"katana --url {self.url} --output {self.filename}"
+
+        	# Execute the command using subprocess
+        	subprocess.run(command, shell=True, check=True)
+
+        	print(Fore.GREEN + "[+] Crawling completed successfully.")
+    	except subprocess.CalledProcessError as e:
+        	print(Fore.RED + f"[-] Error occurred while crawling: {e}")
 
 
     def parameters(self, url):
