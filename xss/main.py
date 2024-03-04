@@ -132,7 +132,7 @@ class Main:
 	# Function to install Katana
 	def install_katana():
 		try:
-		# Install Katana (example command, replace with actual installation command)
+		# Install Katana 
 		subprocess.run(["go", "install", "github.com/projectdiscovery/katana/cmd/katana@latest"], check=True)
 		
 		# Copy katana to /bin/ directory
