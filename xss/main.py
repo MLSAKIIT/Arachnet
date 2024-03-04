@@ -8,7 +8,7 @@ from Waf import Waf_Detect
 from optparse import OptionParser
 import subprocess
 import sys
-from urllib.parse import urlparse , parse_qsl
+from urllib.parse import urlparse , parse_qs
 from concurrent.futures import ThreadPoolExecutor
 
 
@@ -124,8 +124,8 @@ class Main:
 
     def parameters(self, url):
       url_parsed = urlparse(url)
-      parameter_value = parse_qsl(url_parsed.query)
-      parameter = [key for key,value in parameter_value]
+      parameter_value = parse_qs(url_parsed.query)
+      parameter = list(parameter_value)
       return parameter
       """
     Extracts parameter names from the given URL's query string.
@@ -140,6 +140,15 @@ class Main:
 
 
     def parser(self, url, param_name, value):
+      parameter_value = {}
+      url_parsed = urlparse(url)
+      parameter = url_parsed.query
+      parameter = parameter.split("&")
+      for parameter in parameter:
+        parameter = parameter.split("=")
+        parameter_value[parameter[0]] = parameter[1]
+      parameter_value[param_name] = value
+      return parameter_value
       """
     Replaces a parameter's value in the URL and returns a dictionary of modified parameters.
 
