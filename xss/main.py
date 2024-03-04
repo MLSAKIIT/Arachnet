@@ -8,8 +8,9 @@ from Waf import Waf_Detect
 from optparse import OptionParser
 import subprocess
 import sys
-from urllib.parse import urlparse
+from urllib.parse import urlparse,parse_qsl,urlencode
 from concurrent.futures import ThreadPoolExecutor
+
 
 
 """
@@ -29,6 +30,17 @@ This script parses command-line arguments for a vulnerability scanning applicati
 
 """
 
+parser = OptionParser()
+
+parser.add_option("-f", "--filename", dest="filename", help="Specify a file containing URLs to scan (e.g., 'urls.txt').", metavar="FILE")
+parser.add_option("-u", "--url", dest="url", help="Scan a single URL (e.g., 'http://example.com/?id=2').")
+parser.add_option("-o", "--output", dest="output", help="Specify the filename to store scan results (e.g., 'result.txt').")
+parser.add_option("-t", "--threads", dest="threads", help="Number of threads to use for concurrent requests (maximum 10).")
+parser.add_option("-H", "--headers", dest="headers", help="Specify custom headers to send with requests.")
+parser.add_option("--waf", action="store_true", dest="waf", help="Enable web application firewall (WAF) detection and subsequent payload testing.")
+parser.add_option("-w", "--custom_waf", dest="custom_waf", help="Use specific payloads related to the detected WAF.")
+parser.add_option("--crawl", action="store_true", dest="crawl", help="Enable crawling a website to find potential XSS vulnerabilities.")
+parser.add_option("--pipe", action="store_true", dest="pipe", help="Pipe the output of another process as input to this script.")
 
 val,args = parser.parse_args()
 filename = val.filename
@@ -53,10 +65,11 @@ try:
 except TypeError:
     threads = 1
 if threads > 10:
-    threads = 7
+    threads = 7 
 
 if crawl:
     filename = f"{url.split('://')[1]}_katana"
+
 
 class Main:
 
@@ -88,116 +101,166 @@ class Main:
 
     def replace(self,url,param_name,value):
         return re.sub(f"{param_name}=([^&]+)",f"{param_name}={value}",url)
-   
+
     def bubble_sort(self, arr):
-      """
-    Sorts the given array of payloads in ascending order based on specific keys.
+        """
+        Sorts the given array of payloads in ascending order based on specific keys.
 
-    Args:
-        arr (list): The list of payloads to be sorted.
+        Args:
+            arr (list): The list of payloads to be sorted.
 
-    Returns:
-        list: The sorted list of payloads.
+        Returns:
+            list: The sorted list of payloads.
 
-    Notes:
-        - This implementation assumes that each payload in the list is a dictionary,
-          and the sorting is based on the values of specific keys within the dictionaries.
-        - You may need to modify this function if the structure of your payloads is different.
-    """
+        Notes:
+            - This implementation assumes that each payload in the list is a dictionary,
+              and the sorting is based on the values of specific keys within the dictionaries.
+            - You may need to modify this function if the structure of your payloads is different.
+        """
+        n = len(arr)
+        for i in range(n - 1):
+            for j in range(0, n - i - 1):
+                if arr[j]["count"] < arr[j + 1]["count"]:
+                    arr[j], arr[j + 1] = arr[j + 1], arr[j]
+        return arr
 
-    
     def crawl(self):
-       """
-    Initiates a crawling process using Katana and saves the results.
+        """
+        Initiates a crawling process using Katana and saves the results.
 
-    Args:
-        self: Reference to the current object (likely a class instance).
+        Args:
+            self: Reference to the current object (likely a class instance).
 
-    Returns:
-        None
+        Returns:
+            None
 
-    Raises:
-        subprocess.CalledProcessError: If the Katana command fails.
-    """
-
-
+        Raises:
+            subprocess.CalledProcessError: If the Katana command fails.
+        """
+        try:
+            subprocess.check_output(f"katana -u {self.url} -o {self.filename}", shell=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Katana crawling failed: {e}")
 
     def parameters(self, url):
-      """
-    Extracts parameter names from the given URL's query string.
+        """
+        Extracts parameter names from the given URL's query string.
 
-    Args:
-        self: Reference to the current object.
-        url: The URL to extract parameters from.
+        Args:
+            self: Reference to the current object.
+            url: The URL to extract parameters from.
 
-    Returns:
-        list: A list of parameter names found in the URL.
-    """
-
+        Returns:
+            list: A list of parameter names found in the URL.
+        """
+        query_string = urlparse(url).query
+        parameters = re.findall(r"[?&](\w+)=", query_string)
+        return parameters
 
     def parser(self, url, param_name, value):
-      """
-    Replaces a parameter's value in the URL and returns a dictionary of modified parameters.
+        """
+        Replaces a parameter's value in the URL and returns a dictionary of modified parameters.
 
-    Args:
-        self: Reference to the current object.
-        url: The URL to modify.
-        param_name: The name of the parameter to replace.
-        value: The new value to assign to the parameter.
+        Args:
+            self: Reference to the current object.
+            url: The URL to modify.
+            param_name: The name of the parameter to replace.
+            value: The new value to assign to the parameter.
 
-    Returns:
-        dict: A dictionary containing the parsed URL components, including the modified parameter.
-    """
-
+        Returns:
+            dict: A dictionary containing the parsed URL components, including the modified parameter.
+        """
+        parsed_url = urlparse(url)
+        query_params = dict(parse_qsl(parsed_url.query))
+        query_params[param_name] = value
+        new_query_string = urlencode(query_params, doseq=True)
+        new_url = parsed_url._replace(query=new_query_string).geturl()
+        return {
+            "url": new_url,
+            "params": query_params,
+        }
 
     def validator(self, arr, param_name, url):
-      """
-    Analyzes a list of potential parameter values for potential reflection vulnerabilities.
+        """
+        Analyzes a list of potential parameter values for potential reflection vulnerabilities.
 
-    Args:
-        url (str): The base URL to be tested with different parameters.
-        param_name (str): The name of the parameter to be tested.
-        arr (list): A list of potential parameter values to be tested.
-        headers (dict, optional): Custom headers to be included in the HTTP request. Defaults to None.
+        Args:
+            url (str): The base URL to be tested with different parameters.
+            param_name (str): The name of the parameter to be tested.
+            arr (list): A list of potential parameter values to be tested.
+            headers (dict, optional): Custom headers to be included in the HTTP request. Defaults to None.
 
-    Returns:
-        dict: A dictionary containing potential vulnerable parameters found, where the key is the parameter name
-              and the value is a list of potentially vulnerable values.
+        Returns:
+            dict: A dictionary containing potential vulnerable parameters found, where the key is the parameter name
+                  and the value is a list of potentially vulnerable values.
 
-    Raises:
-        Exception: Any exceptions that occur during the execution.
-    """
+        Raises:
+            Exception: Any exceptions that occur during the execution.
+        """
+        vulnerable_params = {}
+        for value in arr:
+            payload_url = self.parser(url, param_name, value)["url"]
+            try:
+                response = requests.get(payload_url, headers=self.headers, timeout=5)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                print(f"Request error for {payload_url}: {e}")
+                continue
+            except requests.exceptions.HTTPError as e:
+                if "404 Not Found" in str(e):
+                    continue
+                print(f"HTTP error for {payload_url}: {e}")
+                continue
+
+            if value in response.text:
+                if param_name not in vulnerable_params:
+                    vulnerable_params[param_name] = []
+                vulnerable_params[param_name].append(value)
+
+        return vulnerable_params
 
     def fuzzer(self, url):
-       """
-    Performs fuzz testing on parameters extracted from a given URL.
+        """
+        Performs fuzz testing on parameters extracted from a given URL.
 
-    Args:
-        url (str): The URL to fuzz.
-        dangerous_characters (list, optional): A list of characters considered
+        Args:
+            url (str): The URL to fuzz.
+            dangerous_characters (list, optional): A list of characters considered
                                  unsafe for fuzzing. Defaults to None.
 
-    Returns:
-        list: The results of applying the fuzzing logic to each parameter.
+        Returns:
+            list: The results of applying the fuzzing logic to each parameter.
 
-    Raises:
-        ValueError: If no parameters are identified in the URL.
+        Raises:
+            ValueError: If no parameters are identified in the URL.
+        """
+        if not url:
+            raise ValueError("URL is missing")
 
-    This function assumes the existence of methods `parameters(url)` and
-    `validator(dangerous_characters, parameter, url)`, but their specific
-    implementations are not included in this code snippet.
+        if not dangerous_characters:
+            dangerous_characters = [
+                "<",
+                ">",
+                '"',
+                "'",
+                "&",
+                ";",
+                "javascript",
+                "script",
+            ]
 
-    **Important Notes:**
+        parameters = self.parameters(url)
+        if not parameters:
+            raise ValueError("No parameters found in the URL")
 
-    - Using threads for fuzzing is generally discouraged due to potential
-      instability and increased complexity.
-    - The `dangerous_characters` list and the custom sorting implemented
-      using `bubble_sort` might require adjustments based on your specific
-      fuzzing context and application.
-    """
-       return data
+        fuzz_results = []
 
+        for param in parameters:
+            for char in dangerous_characters:
+                fuzzed_param_value = f"{param}={urlencode(char)}"
+                fuzz_results.append(self.parser(url, param, fuzzed_param_value))
 
+        return fuzz_results
 
 def filter_and_rank_payloads(arr, payload_file="payloads.json", firewall=None, threads=1):
     """
@@ -216,65 +279,33 @@ def filter_and_rank_payloads(arr, payload_file="payloads.json", firewall=None, t
         FileNotFoundError: If the specified payload file is not found.
         JSONDecodeError: If the payload file contents are invalid JSON.
     """
-        # Load payloads from JSON file
+    try:
+        with open(payload_file, "r") as f:
+            payloads = json.load(f)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Payload file '{payload_file}' not found")
+    except json.JSONDecodeError:
+        raise json.JSONDecodeError("Invalid JSON in payload file")
 
-    # Filter payloads based on firewall (if specified)
-    
-            # Exit if no payloads match the firewall
-        # Use generic payloads (no firewall specified)
-       
+    filtered_payloads = payloads
+    if firewall:
+        filtered_payloads = [
+            payload
+            for payload in payloads
+            if any(
+                firewall.lower() in waf.lower() for waf in payload["wafs"]
+            )
+        ]
 
-    # Count payload occurrences in the target string
+    for payload in filtered_payloads:
+        payload["count"] = arr.count(payload["payload"])
 
-                # Handle potential absence of "Attribute" key
-                
-                # Handle potential absence of "count" key
-                
+    ranked_payloads = sorted(filtered_payloads, key=lambda payload: (payload["count"], not payload["is_perfect_match"]), reverse=True)
 
-    # Sort payloads by count (descending) and potential perfect match
-
-
-
-    def ranking_function(payload):
-
-    # Extract and rank identified payloads
-    
-            # Prepend perfect payloads
-        # Include payloads with non-zero count
-
-        return payload_list
-
-
-    def scanner(self,url):
-       # Print testing message
-       # Check for WAF detection
-
-       # Use custom WAF if defined
-
-
-       # No WAF detected
- 
-
-            # Get potential vulnerabilities from fuzzer
-
-            # Iterate through each potential vulnerability
-
-                 # Filter payloads based on WAF information
-
-                 # Try each filtered payload
-
-                      # Construct new URL with payload
-
-                      # Modify data with the parser (if needed)
-
-                      # Send GET request with the payload
-
-                      # Check for payload presence in the response
-
-     return None
+    return ranked_payloads
 
 if __name__ == "__main__":
-    urls = []
+    urls = ["https://kiit.ac.in"]
     Scanner = Main(filename, output, headers=headers)
     try:
         if url and not filename:
