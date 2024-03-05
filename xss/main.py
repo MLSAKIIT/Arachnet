@@ -122,6 +122,7 @@ class Main:
 
 
 
+
     def parameters(self, url):
       """
     Extracts parameter names from the given URL's query string.
