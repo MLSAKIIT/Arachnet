@@ -367,7 +367,7 @@ class Main:
 
 if __name__ == "__main__":
     urls = ["https://kiit.ac.in"]
-    Scanner = Main(filename, output, headers=headers)
+    Scanner = Main(url, filename, output, headers=headers)
     try:
         if url and not filename:
             Scanner = Main(url,output,headers=headers)
