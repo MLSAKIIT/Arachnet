@@ -73,7 +73,7 @@ if crawl:
 
 class Main:
 
-    def __init__(self,url=None, filename=None, output=None,headers=None):
+    def __init__(self, url=None, filename=None, output=None,headers=None):
         self.filename = filename
         self.url = url
         self.output = output
@@ -219,7 +219,7 @@ class Main:
 
         return vulnerable_params
 
-    def fuzzer(self, url):
+    def fuzzer(self, url,dangerous_characters=None):
         """
         Performs fuzz testing on parameters extracted from a given URL.
 
@@ -262,47 +262,108 @@ class Main:
 
         return fuzz_results
 
-def filter_and_rank_payloads(arr, payload_file="payloads.json", firewall=None, threads=1):
-    """
-    Filters and ranks payloads based on firewall compatibility and occurrence within the target string.
+    def filter_and_rank_payloads(arr, payload_file="payloads.json", firewall=None, threads=1):
+        """
+        Filters and ranks payloads based on firewall compatibility and occurrence within the target string.
 
-    Args:
-        arr (str): The target string against which payloads are compared.
-        payload_file (str, optional): The file path containing payloads in JSON format. Defaults to "payloads.json".
-        firewall (str, optional): The specific firewall to filter payloads for. If None, payloads not specific to a firewall are used. Defaults to None.
-        threads (int, optional): The number of threads to use for parallel processing (not implemented in this function). Defaults to 1.
+        Args:
+            arr (str): The target string against which payloads are compared.
+            payload_file (str, optional): The file path containing payloads in JSON format. Defaults to "payloads.json".
+            firewall (str, optional): The specific firewall to filter payloads for. If None, payloads not specific to a firewall are used. Defaults to None.
+            threads (int, optional): The number of threads to use for parallel processing (not implemented in this function). Defaults to 1.
 
-    Returns:
-        list: A list of ranked payloads, with potential perfect payloads at the beginning and others ranked by occurrence.
+        Returns:
+            list: A list of ranked payloads, with potential perfect payloads at the beginning and others ranked by occurrence.
 
-    Raises:
-        FileNotFoundError: If the specified payload file is not found.
-        JSONDecodeError: If the payload file contents are invalid JSON.
-    """
-    try:
-        with open(payload_file, "r") as f:
-            payloads = json.load(f)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Payload file '{payload_file}' not found")
-    except json.JSONDecodeError:
-        raise json.JSONDecodeError("Invalid JSON in payload file")
+        Raises:
+            FileNotFoundError: If the specified payload file is not found.
+            JSONDecodeError: If the payload file contents are invalid JSON.
+        """
+        try:
+            with open(payload_file, "r") as f:
+                payloads = json.load(f)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Payload file '{payload_file}' not found")
+        except json.JSONDecodeError:
+            raise json.JSONDecodeError("Invalid JSON in payload file")
 
-    filtered_payloads = payloads
-    if firewall:
-        filtered_payloads = [
-            payload
-            for payload in payloads
-            if any(
-                firewall.lower() in waf.lower() for waf in payload["wafs"]
-            )
-        ]
+        filtered_payloads = payloads
+        if firewall:
+            filtered_payloads = [
+                payload
+                for payload in payloads
+                if any(
+                    firewall.lower() in waf.lower() for waf in payload["wafs"]
+                )
+            ]
 
-    for payload in filtered_payloads:
-        payload["count"] = arr.count(payload["payload"])
+        for payload in filtered_payloads:
+            payload["count"] = arr.count(payload["payload"])
 
-    ranked_payloads = sorted(filtered_payloads, key=lambda payload: (payload["count"], not payload["is_perfect_match"]), reverse=True)
+        ranked_payloads = sorted(filtered_payloads, key=lambda payload: (payload["count"], not payload["is_perfect_match"]), reverse=True)
 
-    return ranked_payloads
+        return ranked_payloads
+    def scanner(self, url):
+        # Print testing message
+        print(f"\nTesting: {url}")
+
+        # Check for WAF detection
+        waf_detect = Waf_Detect(url).waf_detect()
+        if waf_detect:
+            print(f"[+] WAF detected: {waf_detect}")
+        else:
+            print("[+] No WAF detected")
+
+        # Use custom WAF if defined
+        if self.headers and "WAF" in self.headers:
+            waf_header = self.headers["WAF"]
+            headers = {waf_header: "1"}
+        else:
+            headers = {}
+        # print("Headers complete\n")
+        # No WAF detected
+        if not waf_detect:
+            # Get potential vulnerabilities from fuzzer
+            fuzzer_results = self.fuzzer(url)
+            print("Fuzzer complete")
+
+            # Iterate through each potential vulnerability
+            for vulnerability in fuzzer_results:
+                # Filter payloads based on WAF information
+                if not waf_detect:
+                    payloads = vulnerability["payloads"]
+                else:
+                    payloads = [payload for payload in vulnerability["payloads"] if payload not in waf_detect]
+
+                if payloads:
+                    print(f"\n[+] Potential vulnerability found: {vulnerability['name']}")
+                    for payload in payloads:
+                        # Construct new URL with payload
+                        new_url = self.parser(url, vulnerability["param"], payload)
+
+                        # Modify data with the parser (if needed)
+                        if vulnerability.get("parser"):
+                            new_url = vulnerability["parser"](new_url, payload)
+
+                        # Send GET request with the payload
+                        try:
+                            response = requests.get(new_url, headers=headers, timeout=5)
+                        except requests.exceptions.RequestException as e:
+                            print(f"[-] Error: {e}")
+                            continue
+
+                        # Check for payload presence in the response
+                        if payload in response.text:
+                            print(f"[+] Payload found: {payload}")
+                            self.result.append((new_url, payload, response.text))
+                        else:
+                            print(f"[-] Payload not found: {payload}")
+
+                    # Rank payloads based on occurrence and add them to the list of results
+                    ranked_payloads = self.filter_and_rank_payloads(response.text, firewall=waf_detect, threads=self.threads)
+                    self.result.extend(ranked_payloads)
+
+        return None
 
 if __name__ == "__main__":
     urls = ["https://kiit.ac.in"]
@@ -311,6 +372,7 @@ if __name__ == "__main__":
         if url and not filename:
             Scanner = Main(url,output,headers=headers)
             Scanner.scanner(url)
+            print("Completed")
             if Scanner.result:
                 Scanner.write(output,Scanner.result[0])
             exit()
