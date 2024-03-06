@@ -145,15 +145,15 @@ class Main:
     parsed_url = urlparse(url)
     query_string = parsed_url.query
 
-    parameters_names = []
+    param_name = []
 
     if query_string:
       for pair in query_string.split('&'):
-        param_name = pair.split('=')[0]
-        parameters_names.append(param_name)
+        param_name1 = pair.split('=')[0]
+        param_name.append(param_name1)
     else:
         print("Please entre th eurl")
-    return parameters_names
+    return param_name
           
     def parser(self, url, param_name, value):
       """
