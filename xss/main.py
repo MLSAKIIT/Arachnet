@@ -68,7 +68,9 @@ if threads > 10:
     threads = 7 
 
 if crawl:
-    filename = f"{url.split('://')[1]}_katana"
+    parsed_url  = urlparse(url)
+    dom = "http://" + parsed_url.netloc
+    filename = f"{dom.split('://')[1]}_katana"
 
 
 class Main:
@@ -87,6 +89,7 @@ class Main:
         '''
         print(Fore.WHITE + "READING URLS")
         urls = subprocess.check_output(f"cat {filename} | grep '=' | sort -u",shell=True).decode('utf-8')
+        print("URLs: \n", urls)
         if not urls:
             print(Fore.GREEN + f"[+] NO URLS WITH GET PARAMETER FOUND")
         return urls.split()
@@ -153,8 +156,14 @@ class Main:
         Returns:
             list: A list of parameter names found in the URL.
         """
+        # print("[+] Searching for parameters")
+        # url = url + "&sid2=663445f63ab7f25a06956ebf0cdf3cfc5b4b261b"
+        # print("URL: ", url)
         query_string = urlparse(url).query
-        parameters = re.findall(r"[?&](\w+)=", query_string)
+        # print("[+] Query string: ", query_string)
+        # parameters = re.findall(r"[?&](\w+)=", query_string)
+        parameters = re.findall(r"(\w+)=", query_string)
+        # print("[+] Parameters: ", parameters)
         return parameters
 
     def parser(self, url, param_name, value):
@@ -234,6 +243,7 @@ class Main:
         Raises:
             ValueError: If no parameters are identified in the URL.
         """
+        # print("[+] In Fuzzer")
         if not url:
             raise ValueError("URL is missing")
 
@@ -249,16 +259,34 @@ class Main:
                 "script",
             ]
 
+            dangerous_characters = [
+                "%3C",
+                "%3E",
+                '%22',
+                "%27",
+                "%26",
+                "%3B",
+                "%20",
+                "javascript",
+                "script",
+            ]
+            
         parameters = self.parameters(url)
-        if not parameters:
-            raise ValueError("No parameters found in the URL")
-
         fuzz_results = []
-
+        # print("[+] Got parameters : ", parameters)
+        if not parameters:
+            print("No parameters found in the URL")
+            raise ValueError("No parameters found in the URL")
+        # print("[+] Fuzzing started")
         for param in parameters:
+            # print(param)
             for char in dangerous_characters:
-                fuzzed_param_value = f"{param}={urlencode(char)}"
+                # encoded_char = char.replace("<", "%3C").replace(">", "%3E").replace('"', "%22").replace("'", "%27").replace("&", "%26").replace(";", "%3B").replace(" ", "%20")
+                # print("Char encoded")
+                fuzzed_param_value = f"{param}={char}"
+                # print("Fuzzed param value: ", fuzzed_param_value)
                 fuzz_results.append(self.parser(url, param, fuzzed_param_value))
+        # print("[+] Fuzzing Complete")
 
         return fuzz_results
 
@@ -320,21 +348,18 @@ class Main:
             headers = {waf_header: "1"}
         else:
             headers = {}
-        # print("Headers complete\n")
         # No WAF detected
         if not waf_detect:
             # Get potential vulnerabilities from fuzzer
-            fuzzer_results = self.fuzzer(url)
-            print("Fuzzer complete")
-
+            vulnerabilities = self.fuzzer(url)
             # Iterate through each potential vulnerability
-            for vulnerability in fuzzer_results:
+            for vulnerability in vulnerabilities:
                 # Filter payloads based on WAF information
                 if not waf_detect:
-                    payloads = vulnerability["payloads"]
+                    payloads = vulnerability
                 else:
-                    payloads = [payload for payload in vulnerability["payloads"] if payload not in waf_detect]
-
+                    payloads = [payload for payload in vulnerability if payload not in waf_detect]
+                print("Payloads: ", payloads)
                 if payloads:
                     print(f"\n[+] Potential vulnerability found: {vulnerability['name']}")
                     for payload in payloads:
@@ -378,6 +403,7 @@ if __name__ == "__main__":
             exit()
         elif filename and crawl:
             Scanner.crawl()
+            print(Fore.GREEN + "[+] CRAWLING COMPLETE : ", Scanner.url)
             urls = Scanner.read(filename)
         elif pipe:
             out = sys.stdin
