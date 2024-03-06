@@ -30,7 +30,7 @@ This script parses command-line arguments for a vulnerability scanning applicati
 """
 
 
-val,args = parser.parse_args()
+val,args = Parser.parse_args()
 filename = val.filename
 threads = val.threads
 output = val.output
@@ -106,12 +106,14 @@ class Main:
     """
 
     
-    def crawl(self):
-       """
+def crawl(self,url,output):
+    """
     Initiates a crawling process using Katana and saves the results.
 
     Args:
         self: Reference to the current object (likely a class instance).
+        url: The URL to crawl
+        output: The output file to save results to
 
     Returns:
         None
@@ -120,7 +122,18 @@ class Main:
         subprocess.CalledProcessError: If the Katana command fails.
     """
 
+try:
+    katana_shell = "Katana Crawler" + self.url
 
+    output = subprocess.check_output(katana_shell, shell = True)
+
+    if self.output:
+        with open(self.output, "w") as f:
+            f.write(output.decode())
+except subprocess.CalledProcessError as e:
+    print("Katana command failed:",e)
+except Exception as e:
+    print("An error occurred during crawling:",e)
 
     def parameters(self, url):
       """
@@ -195,7 +208,7 @@ class Main:
       using `bubble_sort` might require adjustments based on your specific
       fuzzing context and application.
     """
-       return data
+      # return data
 
 
 
@@ -242,10 +255,10 @@ def filter_and_rank_payloads(arr, payload_file="payloads.json", firewall=None, t
             # Prepend perfect payloads
         # Include payloads with non-zero count
 
-        return payload_list
+        # return payload_list
 
 
-    def scanner(self,url):
+     def scanner(self,url):
        # Print testing message
        # Check for WAF detection
 
@@ -271,7 +284,7 @@ def filter_and_rank_payloads(arr, payload_file="payloads.json", firewall=None, t
 
                       # Check for payload presence in the response
 
-     return None
+      return None
 
 if __name__ == "__main__":
     urls = []
