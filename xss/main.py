@@ -122,18 +122,7 @@ def crawl(self,url,output):
         subprocess.CalledProcessError: If the Katana command fails.
     """
 
-try:
-    katana_shell = "Katana Crawler" + self.url
 
-    output = subprocess.check_output(katana_shell, shell = True)
-
-    if self.output:
-        with open(self.output, "w") as f:
-            f.write(output.decode())
-except subprocess.CalledProcessError as e:
-    print("Katana command failed:",e)
-except Exception as e:
-    print("An error occurred during crawling:",e)
 
     def parameters(self, url):
       """
