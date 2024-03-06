@@ -100,7 +100,7 @@ class Main:
         list: The sorted list of payloads.
 
     Notes:
-        - This  implementation assumes that each payload in the list is a dictionary,
+        - This implementation assumes that each payload in the list is a dictionary,
           and the sorting is based on the values of specific keys within the dictionaries.
         - You may need to modify this function if the structure of your payloads is different.
     """
