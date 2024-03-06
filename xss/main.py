@@ -30,7 +30,7 @@ This script parses command-line arguments for a vulnerability scanning applicati
 """
 
 
-val,args = parser.parse_args()
+val,args = Parser.parse_args()
 filename = val.filename
 threads = val.threads
 output = val.output
@@ -119,7 +119,16 @@ class Main:
     Raises:
         subprocess.CalledProcessError: If the Katana command fails.
     """
-
+    try:
+        katana_cmd="Katana crawl" + url
+        output = subprocess.check_output(katana_cmd, shell=True)
+        if output:
+            with open(output, "w") as f:
+             f.write(output.decode())
+    except subprocess.CalledProcessError as e:
+        print("Katana command failed. Please ensure that Katana is installed and in your PATH.",e)
+    except Exception as e:
+        print("An error occured while crawling the website.",e)
 
 
     def parameters(self, url):
@@ -168,8 +177,8 @@ class Main:
         Exception: Any exceptions that occur during the execution.
     """
 
-    def fuzzer(self, url):
-       """
+    """ def fuzzer(self, url):
+
     Performs fuzz testing on parameters extracted from a given URL.
 
     Args:
@@ -194,8 +203,8 @@ class Main:
     - The `dangerous_characters` list and the custom sorting implemented
       using `bubble_sort` might require adjustments based on your specific
       fuzzing context and application.
-    """
-       return data
+    
+       return data """
 
 
 
@@ -235,14 +244,14 @@ def filter_and_rank_payloads(arr, payload_file="payloads.json", firewall=None, t
 
 
 
-    def ranking_function(payload):
+    """def ranking_function(payload):
 
     # Extract and rank identified payloads
-    
+      
             # Prepend perfect payloads
         # Include payloads with non-zero count
 
-        return payload_list
+     return payload_list """
 
 
     def scanner(self,url):
