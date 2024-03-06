@@ -133,17 +133,28 @@ class Main:
 
     def parameters(self, url):
       """
-    Extracts parameter names from the given URL's query string.
+     Extracts parameter names from the given URL's query string.
 
-    Args:
+     Args:
         self: Reference to the current object.
         url: The URL to extract parameters from.
 
-    Returns:
+     Returns:
         list: A list of parameter names found in the URL.
-    """
+     """
+    parsed_url = urlparse(url)
+    query_string = parsed_url.query
 
+    parameters_names = []
 
+    if query_string:
+      for pair in query_string.split('&'):
+        param_name = pair.split('=')[0]
+        parameters_names.append(param_name)
+    else:
+        print("Please entre th eurl")
+    return parameters_names
+          
     def parser(self, url, param_name, value):
       """
     Replaces a parameter's value in the URL and returns a dictionary of modified parameters.
