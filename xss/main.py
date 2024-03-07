@@ -164,6 +164,23 @@ class Main:
 
 
     def validator(self, arr, param_name, url):
+        dict = {param_name: []}
+        try:
+            for data in arr:
+                final_parameters = self.parser(url,param_name,data + "randomstring")
+                new_url = urlparse(url).scheme + "://" + urlparse(url).hostname + "/" + urlparse(url).path
+                #print(new_url)
+                if self.headers:
+                #print("I am here")
+                    response = requests.get(new_url,params=final_parameters,headers=self.headers,verify=False).text
+            else:
+                response = requests.get(new_url,params=final_parameters,verify=False).text
+            if data + "randomstring" in response:
+                if not threads or threads == 1:
+                    print(Fore.GREEN + f"[+] {data} is reflecting in the response")
+                dict[param_name].append(data)
+        except Exception as e:
+            print(e)       
       """
     Analyzes a list of potential parameter values for potential reflection vulnerabilities.
 
