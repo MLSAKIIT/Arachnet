@@ -1,6 +1,7 @@
 import aiohttp
 import asyncio
 import re
+import json
 from bs4 import BeautifulSoup
 class DnsDumpsterClient:
     def __init__(self, domain):
@@ -36,11 +37,12 @@ class DnsDumpsterClient:
                 html = await response.text()
                 #await self.parse_data(html)
                 return html
-    
+
     async def parse_data(self, html):
         anchors = ['dnsanchor', 'mxanchor', 'txtanchor', 'hostanchor']
+        data = []
         for anchor in anchors:
-            an = 'DNS' if anchor == 'dnsanchor' else ('MX' if anchor == 'mxanchor' else 'host' if anchor == 'hostanchor' else 'TXT')
+            an = 'DNS' if anchor == 'dnsanchor' else ('MX' if anchor == 'mxanchor' else 'Host' if anchor == 'hostanchor' else 'TXT')
             soup = BeautifulSoup(html, 'html.parser')
             try:
                 dns_servers_section = soup.find('a', attrs={'name': anchor}).find_next('div', class_='table-responsive')
@@ -48,13 +50,14 @@ class DnsDumpsterClient:
                 if anchor == 'txtanchor':
                     try:
                         txt_table = dns_servers_section.find('table')
-                        print('TXT Records:\n')
+                        txt_records = []
                         for i, txt_record in enumerate(txt_table.find_all('tr'), start=1):
-                            print(f'\t{i}. {txt_record.td.text.strip()}')
+                            txt_records.append({'index': i, 'record': txt_record.td.text.strip()})
+                        data.append({'type': 'TXT', 'records': txt_records})
                     except AttributeError:
-                        print("No TXT records found.\n")
+                        data.append({'type': 'TXT', 'error': 'No TXT records found.'})
                 else:
-                    print(f'\n{an} Records:\n')
+                    dns_records = []
                     for dns_server in dns_servers:
                         try:
                             server_name = dns_server.find('td', class_='col-md-4').text.strip()
@@ -64,8 +67,10 @@ class DnsDumpsterClient:
                             server_name = re.sub(r'HTTP\s+TECH:\s*(.*)', '', server_name)
                             ip_address = dns_server.find('td', class_='col-md-3').text.strip()
                             location = dns_server.find_all("td", class_="col-md-3")[1].text.strip()
-                            print(f"\tServer Name: {server_name.strip()}, IP Address: {ip_address}, Location: {location}\n")
+                            dns_records.append({'server_name': server_name.strip(), 'ip_address': ip_address, 'location': location})
                         except AttributeError:
-                            print("Attribute Error occurred while processing DNS server data.\n")
+                            dns_records.append({'error': 'Attribute Error occurred while processing DNS server data.'})
+                    data.append({'type': an, 'records': dns_records})
             except AttributeError:
-                print("Attribute Error occurred while processing DNS servers section.\n")
+                data.append({'type': an, 'error': 'Attribute Error occurred while processing DNS servers section.'})
+        return data
