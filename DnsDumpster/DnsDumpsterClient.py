@@ -1,6 +1,7 @@
 import aiohttp
 import asyncio
-
+import re
+from bs4 import BeautifulSoup
 class DnsDumpsterClient:
     def __init__(self, domain):
         self.url = 'https://dnsdumpster.com/'
@@ -33,3 +34,38 @@ class DnsDumpsterClient:
             async with session.post(self.url, headers=self.headers, data=self.payload) as response:
                 print(response.status)
                 html = await response.text()
+                #await self.parse_data(html)
+                return html
+    
+    async def parse_data(self, html):
+        anchors = ['dnsanchor', 'mxanchor', 'txtanchor', 'hostanchor']
+        for anchor in anchors:
+            an = 'DNS' if anchor == 'dnsanchor' else ('MX' if anchor == 'mxanchor' else 'host' if anchor == 'hostanchor' else 'TXT')
+            soup = BeautifulSoup(html, 'html.parser')
+            try:
+                dns_servers_section = soup.find('a', attrs={'name': anchor}).find_next('div', class_='table-responsive')
+                dns_servers = dns_servers_section.find_all('tr')
+                if anchor == 'txtanchor':
+                    try:
+                        txt_table = dns_servers_section.find('table')
+                        print('TXT Records:\n')
+                        for i, txt_record in enumerate(txt_table.find_all('tr'), start=1):
+                            print(f'\t{i}. {txt_record.td.text.strip()}')
+                    except AttributeError:
+                        print("No TXT records found.\n")
+                else:
+                    print(f'\n{an} Records:\n')
+                    for dns_server in dns_servers:
+                        try:
+                            server_name = dns_server.find('td', class_='col-md-4').text.strip()
+                            server_name = re.sub(r'HTTP:\s*(.*)', '', server_name)
+                            server_name = re.sub(r'FTP:\s*(.*)', '', server_name)
+                            server_name = re.sub(r'SSH:\s*(.*)', '', server_name)
+                            server_name = re.sub(r'HTTP\s+TECH:\s*(.*)', '', server_name)
+                            ip_address = dns_server.find('td', class_='col-md-3').text.strip()
+                            location = dns_server.find_all("td", class_="col-md-3")[1].text.strip()
+                            print(f"\tServer Name: {server_name.strip()}, IP Address: {ip_address}, Location: {location}\n")
+                        except AttributeError:
+                            print("Attribute Error occurred while processing DNS server data.\n")
+            except AttributeError:
+                print("Attribute Error occurred while processing DNS servers section.\n")

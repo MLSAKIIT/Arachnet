@@ -5,7 +5,8 @@ from DnsDumpsterClient import *
 
 async def main(url):
     client = DnsDumpsterClient(url)
-    await client.fetch_data()
+    html = await client.fetch_data()
+    await client.parse_data(html)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='DNS Dumpster Client')
