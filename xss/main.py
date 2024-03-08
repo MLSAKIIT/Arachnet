@@ -188,8 +188,8 @@ class Main:
         Exception: Any exceptions that occur during the execution.
     """
 
-    """ def fuzzer(self, url):
-
+    def fuzzer(self, url):
+     """
     Performs fuzz testing on parameters extracted from a given URL.
 
     Args:
@@ -214,11 +214,32 @@ class Main:
     - The `dangerous_characters` list and the custom sorting implemented
       using `bubble_sort` might require adjustments based on your specific
       fuzzing context and application.
+      """
+        def Dangerous_charaters(param_name):
+        if dangerous_characters is None:
+            dangerous_characters = ['<', '>', '"', "'", ';', '&', '$']
+
+        dangerous_character = []
+        for char in dangerous_characters:
+            dangerous_character.append(param_name + char)
+            dangerous_character.append(char + parame_name)
+        return dangerous_characters
+            
+            data = {}
+    for parameters in param_name:
+        data = apply_fuzzing_logic(parameter, dangerous_characters)
+        vulnerability_results = {}
+        for value in data:
+            query_params = {parameter: value}
+            response = requests.get(url, params=query_params)
+            if value in response.text:
+                if parameter not in vulnerability_results:
+                    vulnerability_results[parameter] = []
+                vulnerability_results[parameter].append(value)
+        if vulnerability_results:
+            data.update(vulnerability_results)
+    return data
     
-       return data """
-
-
-
 def filter_and_rank_payloads(arr, payload_file="payloads.json", firewall=None, threads=1):
     """
     Filters and ranks payloads based on firewall compatibility and occurrence within the target string.
