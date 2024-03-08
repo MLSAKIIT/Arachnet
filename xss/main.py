@@ -87,8 +87,8 @@ class Main:
         subprocess.call(f"echo '{value}' >> {output}",shell=True)
 
     def replace(self,url,param_name,value):
-        return re.sub(f"{param_name}=([^&]+)",f"{param_name}={value}",url)
-   
+        return re.sub(f"{param_name}=([^&]+)",f"{param_name}={value}",url)\
+        
     def bubble_sort(self, arr, keys):
       """
     Sorts the given array of payloads in ascending order based on specific keys.
@@ -107,33 +107,16 @@ class Main:
     #----------------------------------------------------------------------------
         
         n = len(arr)
-
         for i in range(n - 1):
             for j in range(0, n - i - 1):
-                if self.compare_payloads(arr[j], arr[j + 1], keys):
-                    arr[j], arr[j + 1] = arr[j + 1], arr[j]
+                if (arr[j]["value"] > arr[j + 1]["value"]) or (arr[j]["value"] == arr[j + 1]["value"] and arr[j]["size"] > arr[j + 1]["size"]):
+                    arr[j], arr[j + 1] = arr[j + 1], arr[j]            
+        return arr 
+    
+    payloads = []
+    scanner = Scanner()
+    sorted_payloads = scanner.bubble_sort(payloads)
 
-        return arr
-
-    def compare_payloads(self, a, b, keys):
-        """
-        Compares two payloads based on the specified keys.
-
-            keys (list): The list of keys to be used for comparison.
-
-        Returns:
-            bool: True if the first payload is "smaller" than the second one, False otherwise.
-        """
-        for key in keys:
-            if a.get(key) < b.get(key):
-                return True
-            elif a.get(key) > b.get(key):
-                return False
-
-        return False
-        """
-        define keys as user input or predefined keys
-        """
     #----------------------------------------------------------------------------------
     def crawl(self):
        """
