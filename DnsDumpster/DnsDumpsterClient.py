@@ -32,7 +32,7 @@ class DnsDumpsterClient:
     async def fetch_data(self):
         async with aiohttp.ClientSession() as session:
             async with session.post(self.url, headers=self.headers, data=self.payload) as response:
-                print(response.status)
+                #print(response.status)
                 html = await response.text()
                 #await self.parse_data(html)
                 return html
