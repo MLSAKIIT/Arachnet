@@ -11,26 +11,11 @@ import sys
 from urllib.parse import urlparse
 from concurrent.futures import ThreadPoolExecutor
 
+# Define OptionParser for command-line arguments
+parser = OptionParser()
+# ... Add options and arguments to the parser as needed
 
-"""
-This script parses command-line arguments for a vulnerability scanning application.
-
-**Options:**
-
-- `-f`, `--filename`: Specify a file containing URLs to scan (e.g., `urls.txt`).
-- `-u`, `--url`: Scan a single URL (e.g., `http://example.com/?id=2`).
-- `-o`, `--output`: Specify the filename to store scan results (e.g., `result.txt`).
-- `-t`, `--threads`: Number of threads to use for concurrent requests (maximum 10).
-- `-H`, `--headers`: Specify custom headers to send with requests.
-- `--waf`: Enable web application firewall (WAF) detection and subsequent payload testing.
-- `-w`, `--custom_waf`: Use specific payloads related to the detected WAF.
-- `--crawl`: Enable crawling a website to find potential XSS vulnerabilities.
-- `--pipe`: Pipe the output of another process as input to this script.
-
-"""
-
-
-val,args = parser.parse_args()
+val, args = parser.parse_args()
 filename = val.filename
 threads = val.threads
 output = val.output
@@ -60,51 +45,43 @@ if crawl:
 
 class Main:
 
-    def __init__(self,url=None, filename=None, output=None,headers=None):
+    def __init__(self, url=None, filename=None, output=None, headers=None):
         self.filename = filename
         self.url = url
         self.output = output
         self.headers = headers
-        #print(headers)
         self.result = []
 
-    def read(self,filename):
-        '''
-        Read & sort GET  urls from given filename
-        '''
+    def read(self, filename):
         print(Fore.WHITE + "READING URLS")
-        urls = subprocess.check_output(f"cat {filename} | grep '=' | sort -u",shell=True).decode('utf-8')
+        urls = subprocess.check_output(f"cat {filename} | grep '=' | sort -u", shell=True).decode('utf-8')
         if not urls:
             print(Fore.GREEN + f"[+] NO URLS WITH GET PARAMETER FOUND")
         return urls.split()
 
     def write(self, output, value):
-        '''
-        Writes the output back to the given filename.
-        '''
         if not output:
             return None
-        subprocess.call(f"echo '{value}' >> {output}",shell=True)
+        subprocess.call(f"echo '{value}' >> {output}", shell=True)
 
-    def replace(self,url,param_name,value):
-        return re.sub(f"{param_name}=([^&]+)",f"{param_name}={value}",url)
-   
-    def bubble_sort(self, arr):
-      """
-    Sorts the given array of payloads in ascending order based on specific keys.
+    def replace(self, url, param_name, value):
+        return re.sub(f"{param_name}=([^&]+)", f"{param_name}={value}", url)
 
-    Args:
-        arr (list): The list of payloads to be sorted.
+    def bubble_sort(self, arr, key):
 
-    Returns:
-        list: The sorted list of payloads.
-
-    Notes:
-        - This implementation assumes that each payload in the list is a dictionary,
-          and the sorting is based on the values of specific keys within the dictionaries.
-        - You may need to modify this function if the structure of your payloads is different.
-    """
-
+        # Get the length of the payload list
+        n = len(arr)
+        # Traverse through all elements in the list
+        for i in range(n):
+            
+        # Last i elements are already sorted, so we don't need to check them
+            for j in range(0, n-i-1):
+                 # Compare the payloads based on the specified key
+                if arr[j][key] > arr[j+1][key]:
+                      # Swap if the current payload is greater than the next one
+                    arr[j], arr[j+1] = arr[j+1], arr[j]
+         # Return the sorted list of payloads
+        return arr
     
     def crawl(self):
        """
