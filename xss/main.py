@@ -135,7 +135,7 @@ class Main:
 
 
 
-    def parameters(self, url):
+    def parameters(self, url, param_name, param_value):
       """
     Extracts parameter names from the given URL's query string.
 
@@ -146,7 +146,28 @@ class Main:
     Returns:
         list: A list of parameter names found in the URL.
     """
+    #---------------------------------------------------------------------------
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
 
+        if param_name in query_params:
+            query_params[param_name] = [param_value]
+        else:
+            query_params.append((param_name, [param_value]))
+
+        query_string = urlencode(query_params, doseq=True)
+        new_url = parsed_url._replace(query=query_string).geturl()
+
+        return {
+            "scheme": parsed_url.scheme,
+            "netloc": parsed_url.netloc,
+            "path": parsed_url.path,
+            "params": parsed_url.params,
+            "query": query_string,
+            "fragment": parsed_url.fragment,
+            "url": new_url,
+        }
+    #-----------------------------------------------------------------------------
 
     def parser(self, url, param_name, value):
       """
