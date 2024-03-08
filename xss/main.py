@@ -126,24 +126,30 @@ class Main:
         dict: A dictionary containing the parsed URL components, including the modified parameter.
     """
 
+def validator(self, arr, param_name, url, headers=None):
+    vulnerable_params = {}
 
-    def validator(self, arr, param_name, url):
-      """
-    Analyzes a list of potential parameter values for potential reflection vulnerabilities.
+    for value in arr:
+        # Construct the URL with the potential payload
+        modified_url = self.replace(url, param_name, value)
 
-    Args:
-        url (str): The base URL to be tested with different parameters.
-        param_name (str): The name of the parameter to be tested.
-        arr (list): A list of potential parameter values to be tested.
-        headers (dict, optional): Custom headers to be included in the HTTP request. Defaults to None.
+        try:
+            # Send GET request with the potential payload
+            response = requests.get(modified_url, headers=headers)
 
-    Returns:
-        dict: A dictionary containing potential vulnerable parameters found, where the key is the parameter name
-              and the value is a list of potentially vulnerable values.
+            # Check for payload presence in the response
+            if param_name in response.text:
+                # If the parameter name is found in the response, mark it as potentially vulnerable
+                if param_name not in vulnerable_params:
+                    vulnerable_params[param_name] = []
+                vulnerable_params[param_name].append(value)
 
-    Raises:
-        Exception: Any exceptions that occur during the execution.
-    """
+        except Exception as e:
+            # Handle exceptions gracefully, you may want to log these errors
+            print(f"Error while testing {param_name}={value}: {e}")
+
+    return vulnerable_params
+
 
     def fuzzer(self, url):
        """
