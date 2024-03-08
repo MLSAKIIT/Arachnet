@@ -31,4 +31,8 @@ wdwd
 ### CONTRIBUTORS
 
 - [Aaryan Jordan](https://www.linkedin.com/in/aaryan-jordan/): Project lead
+<<<<<<< HEAD
+- []
+=======
 - [Dhruv Agarwal](https://www.linkedin.com/in/dhruv-agarwal-704048212/): Project co-lead
+>>>>>>> 7535c6cf8123bd8d13e856546d3ba59ab7589012

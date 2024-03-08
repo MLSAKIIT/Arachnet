@@ -87,9 +87,9 @@ class Main:
         subprocess.call(f"echo '{value}' >> {output}",shell=True)
 
     def replace(self,url,param_name,value):
-        return re.sub(f"{param_name}=([^&]+)",f"{param_name}={value}",url)
-   
-    def bubble_sort(self, arr):
+        return re.sub(f"{param_name}=([^&]+)",f"{param_name}={value}",url)\
+        
+    def bubble_sort(self, arr, keys):
       """
     Sorts the given array of payloads in ascending order based on specific keys.
 
@@ -104,8 +104,20 @@ class Main:
           and the sorting is based on the values of specific keys within the dictionaries.
         - You may need to modify this function if the structure of your payloads is different.
     """
-
+    #----------------------------------------------------------------------------
+        
+        n = len(arr)
+        for i in range(n - 1):
+            for j in range(0, n - i - 1):
+                if (arr[j]["value"] > arr[j + 1]["value"]) or (arr[j]["value"] == arr[j + 1]["value"] and arr[j]["size"] > arr[j + 1]["size"]):
+                    arr[j], arr[j + 1] = arr[j + 1], arr[j]            
+        return arr 
     
+    payloads = []
+    scanner = Scanner()
+    sorted_payloads = scanner.bubble_sort(payloads)
+
+    #----------------------------------------------------------------------------------
     def crawl(self):
        """
     Initiates a crawling process using Katana and saves the results.
@@ -122,7 +134,8 @@ class Main:
 
 
 
-    def parameters(self, url):
+
+    def parameters(self, url, param_name, param_value):
       """
     Extracts parameter names from the given URL's query string.
 
@@ -133,7 +146,28 @@ class Main:
     Returns:
         list: A list of parameter names found in the URL.
     """
+    #---------------------------------------------------------------------------
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
 
+        if param_name in query_params:
+            query_params[param_name] = [param_value]
+        else:
+            query_params.append((param_name, [param_value]))
+
+        query_string = urlencode(query_params, doseq=True)
+        new_url = parsed_url._replace(query=query_string).geturl()
+
+        return {
+            "scheme": parsed_url.scheme,
+            "netloc": parsed_url.netloc,
+            "path": parsed_url.path,
+            "params": parsed_url.params,
+            "query": query_string,
+            "fragment": parsed_url.fragment,
+            "url": new_url,
+        }
+    #-----------------------------------------------------------------------------
 
     def parser(self, url, param_name, value):
       """
