@@ -63,6 +63,8 @@ def crawl(url, base_url):
 
     with open(katana_output_file, 'r') as f:
         visited_urls = [line.strip() for line in f.readlines() if line.startswith(base_url)]
+    # print(visited_urls)
+    return set(visited_urls)
 
 
 def test_request(url, method):
@@ -163,8 +165,7 @@ def main():
         payloads = ["../", "/etc/passwd", "admin"]
 
     # Start crawling and spidering from the initial URL
-    crawl(start_url, base_url)
-
+    visited_urls = crawl(start_url, base_url)
     # Make requests with different parameter values, payloads, methods, headers, and analyze the responses
     for url in visited_urls:
         for endpoint in endpoints:
