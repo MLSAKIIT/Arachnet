@@ -79,11 +79,13 @@ def crawl(url, base_url):
             crawl(href, base_url)
 
 def test_request(url, method):
-    try:
-        response = requests.request(method, url, headers=headers)
-        return response.status_code, response.text
-    except requests.RequestException as e:
-        return None, str(e)
+  try:
+    response = requests.request(method, url, headers=headers)
+    return response.status_code, response.text
+  except requests.exceptions.ConnectionError as e:
+    return None, f"Connection Error: {url} - {str(e)}"  # Include URL for context
+  except requests.exceptions.RequestException as e:
+    return None, f"Request Error: {url} - {str(e)}"  # Include URL for context
 
 def analyze_response(url, method, status_code, response_text):
     if status_code == 200:
