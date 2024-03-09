@@ -190,7 +190,7 @@ class Main:
 
     def fuzzer(self, url):
      """
-     Performs fuzz testing on parameters extracted from a given URL.
+    Performs fuzz testing on parameters extracted from a given URL.
 
      Args:
         url (str): The URL to fuzz.
@@ -214,12 +214,32 @@ class Main:
      - The `dangerous_characters` list and the custom sorting implemented
       using `bubble_sort` might require adjustments based on your specific
       fuzzing context and application.
-     """
-      
-    return data 
+      """
+        def Dangerous_charaters(param_name):
+        if dangerous_characters is None:
+            dangerous_characters = ['<', '>', '"', "'", ';', '&', '$']
 
-
-
+        dangerous_character = []
+        for char in dangerous_characters:
+            dangerous_character.append(param_name + char)
+            dangerous_character.append(char + parame_name)
+        return dangerous_characters
+            
+            data = {}
+    for parameters in param_name:
+        data = apply_fuzzing_logic(parameter, dangerous_characters)
+        vulnerability_results = {}
+        for value in data:
+            query_params = {parameter: value}
+            response = requests.get(url, params=query_params)
+            if value in response.text:
+                if parameter not in vulnerability_results:
+                    vulnerability_results[parameter] = []
+                vulnerability_results[parameter].append(value)
+        if vulnerability_results:
+            data.update(vulnerability_results)
+    return data
+    
 def filter_and_rank_payloads(arr, payload_file="payloads.json", firewall=None, threads=1):
     """
     Filters and ranks payloads based on firewall compatibility and occurrence within the target string.
@@ -253,17 +273,51 @@ def filter_and_rank_payloads(arr, payload_file="payloads.json", firewall=None, t
                 
 
     # Sort payloads by count (descending) and potential perfect match
+   try:
+        with open(payload_file, 'r') as f:
+            payloads = json.load(f)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Payload file '{payload_file}' not found.")
+    except json.JSONDecodeError:
+        raise json.JSONDecodeError("Invalid JSON format in payload file.")
+
+    # Filter payloads based on firewall (if specified)
+    if firewall:
+        filtered_payloads = [payload for payload in payloads if payload.get("firewall") == firewall]
+        # Exit if no payloads match the firewall
+        if not filtered_payloads:
+            return []
+    else:
+        filtered_payloads = [payload for payload in payloads if not payload.get("firewall")]
+
+    # Count payload occurrences in the target string
+    ranked_payloads = []
+    for payload in filtered_payloads:
+        count = arr.count(payload.get("payload"))
+        payload["count"] = count
+        # Handle potential absence of "Attribute" key
+        attribute = payload.get("Attribute", None)
+        if attribute is None:
+            payload["Attribute"] = "N/A"
+        # Handle potential absence of "count" key
+        if count is None:
+            payload["count"] = 0
+        ranked_payloads.append(payload)
+
+    # Sort payloads by count (descending) and potential perfect match
+    ranked_payloads.sort(key=lambda x: (x["count"], x["Attribute"] != "N/A"), reverse=True)
+   
+ return ranked_payloads
 
 
-
-    """def ranking_function(payload):
-
+    def ranking_function(payload):
+     
     # Extract and rank identified payloads
       
             # Prepend perfect payloads
         # Include payloads with non-zero count
 
-     return payload_list """
+     return payload_list 
 
 
     def scanner(self,url):
