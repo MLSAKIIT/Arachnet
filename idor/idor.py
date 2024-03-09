@@ -100,15 +100,15 @@ def analyze_response(url, method, status_code, response_text):
     else:
         print(error + f"No IDOR vulnerability found for URL: {url} | Method: {method} | Status Code: {status_code}")
 
-def main():
+def main(self):
     target_url = input(ask + "Enter Your Target's URL: ")
-    base_url = f"{target_url}"
-    start_url = base_url + "/"
+    base_url = f"{target_url}/"
+
     # Start crawling and spidering from the initial URL
-    crawl(start_url, base_url)
+    self.crawl(base_url, base_url)
 
     # Make requests with different parameter values, payloads, methods, headers, and analyze the responses
-    for url in visited_urls:
+    for url in self.visited_urls:
         for endpoint in endpoints:
             for parameter in parameters:
                 for value in test_values + payloads:
@@ -116,13 +116,13 @@ def main():
                         # Craft the request URL with the modified endpoint and parameter value
                         url_with_param = urljoin(url, endpoint) + "?" + parameter + "=" + value
 
-                        status_code, response_text = test_request(url_with_param, method)
-                        analyze_response(url_with_param, method, status_code, response_text)
+                        status_code, response_text = self.test_request(url_with_param, method)
+                        self.analyze_response(url_with_param, method, status_code, response_text)
 
 if __name__ == '__main__':
-  try:
-     os.system("clear")
-     main()
-
-  except KeyboardInterrupt:
-    print(error + "You Pressed Ctrl + C Goodbye!")
+    try:
+        scanner = IDORScanner()
+        os.system("clear")
+        scanner.main()
+    except KeyboardInterrupt:
+        print(f"{yellow}[{white}!{yellow}] {red}You Pressed Ctrl + C. Goodbye!")
