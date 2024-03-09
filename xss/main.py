@@ -208,7 +208,7 @@ class Main:
         """
         vulnerable_params = {}
         for value in arr:
-            payload_url = self.parser(url, param_name, value)["url"]
+            payload_url = self.parser(url, param_name, value)
             try:
                 response = requests.get(payload_url, headers=self.headers, timeout=5)
                 response.raise_for_status()
