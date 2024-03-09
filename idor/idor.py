@@ -67,16 +67,18 @@ sensitive_endpoints = [
 
 visited_urls = set()
 
-def crawl(url, base_url):
-    visited_urls.add(url)
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.content, "html.parser")
+def crawl(url, base_url, depth=1):
+  if depth <= 0:
+    return
+  visited_urls.add(url)
+  response = requests.get(url, headers=headers)
+  soup = BeautifulSoup(response.content, "html.parser")
 
-    #Extract all links from the current page
-    for link in soup.find_all("a"):
-        href = link.get("href")
-        if href and href.startswith(base_url) and href not in visited_urls:
-            crawl(href, base_url)
+  for link in soup.find_all("a"):
+    href = link.get("href")
+    if href and href.startswith(base_url) and href not in visited_urls and not href.startswith("http"):
+      crawl(href, base_url, depth-1)
+
 
 def test_request(url, method):
   try:
