@@ -48,7 +48,7 @@ class IDORTarget:
             match = re.search(pattern, content, re.IGNORECASE)
             if match:
                 param, value = match.group().split('=')
-                test_content = self.test_idor(param, 'test')
+                test_content = self.test_idor(param)
                 if test_content and value in test_content:
                     print(f"{Fore.GREEN}[+] Confirmed IDOR vulnerability: {self.url}")
                     # print(f"Parameter: {param}, Original Value: {value}, Test Value: test{Style.RESET_ALL}")
@@ -56,15 +56,26 @@ class IDORTarget:
 
         return False
 
-    def test_idor(self, param, value):
-        modified_url = re.sub(f"{param}=[^&]*", f"{param}={value}", self.url)
-        try:
-            response = requests.get(modified_url, headers=self.headers, proxies=self.proxies, cookies=self.cookies)
-            response.raise_for_status()
-            return response.text
-        except requests.exceptions.RequestException as e:
-            print(f"{Fore.RED}[ERROR] {e}{Style.RESET_ALL}")
-            return None
+    def test_idor(self, param):
+        """
+        Test for IDOR vulnerabilities by sending a request with modified data.
+        """
+        # Predefined values for testing
+        test_values = ['test', '123', 'abc', 'null', '0', '1', '-1', 'true', 'false']
+
+        for value in test_values:
+            modified_url = re.sub(f"{param}=[^&]*", f"{param}={value}", self.url)
+            try:
+                response = requests.get(modified_url, headers=self.headers, proxies=self.proxies, cookies=self.cookies)
+                response.raise_for_status()
+                if value in response.text:
+                    print(f"[+] Potential IDOR vulnerability found: {self.url}")
+                    print(f"Parameter: {param}, Test Value: {value}")
+                    return response.text
+            except requests.exceptions.RequestException as e:
+                print(f"{Fore.RED}[ERROR] {e}{Style.RESET_ALL}")
+
+        return False
 
     def explore(self):
         url_name = urlparse(self.url).netloc
@@ -96,8 +107,6 @@ def main():
     parser.add_argument('-P', '--proxy', dest="proxy", default=None, help='Proxy (e.g., "127.0.0.1:8080")')
     parser.add_argument('-c', '--cookies', dest="cookies", default=None, help='Cookies (e.g., "session=abc123")')
     parser.add_argument('-p', '--post-data', dest="post_data", default=None, help='POST data (e.g., "{\"id\": \"IDOR\"}")')
-    args = parser.parse_args()
-    
     args = parser.parse_args()
 
     headers = IDORTarget.parse_headers(args.headers)
