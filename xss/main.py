@@ -130,7 +130,18 @@ class Main:
         subprocess.CalledProcessError: If the Katana command fails.
     """
 
+try:
+    katana_shell = "Katana Crawler" + self.url
 
+    output = subprocess.check_output(katana_shell, shell = True)
+
+    if self.output:
+        with open(self.output, "w") as f:
+            f.write(output.decode())
+except subprocess.CalledProcessError as e:
+    print("Katana command failed:",e)
+except Exception as e:
+    print("An error occurred during crawling:",e)
 
     def parameters(self, url):
       url_parsed = urlparse(url)
@@ -218,7 +229,7 @@ class Main:
       using `bubble_sort` might require adjustments based on your specific
       fuzzing context and application.
     """
-       return data
+      # return data
 
 
 
@@ -265,7 +276,7 @@ def filter_and_rank_payloads(arr, payload_file="payloads.json", firewall=None, t
             # Prepend perfect payloads
         # Include payloads with non-zero count
 
-        return payload_list
+        # return payload_list
 
 
     def scanner(self,url):
