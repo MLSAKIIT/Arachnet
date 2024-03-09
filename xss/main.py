@@ -188,34 +188,35 @@ class Main:
         Exception: Any exceptions that occur during the execution.
     """
 
-    """ def fuzzer(self, url):
+    def fuzzer(self, url):
+     """
+     Performs fuzz testing on parameters extracted from a given URL.
 
-    Performs fuzz testing on parameters extracted from a given URL.
-
-    Args:
+     Args:
         url (str): The URL to fuzz.
         dangerous_characters (list, optional): A list of characters considered
                                  unsafe for fuzzing. Defaults to None.
 
-    Returns:
+     Returns:
         list: The results of applying the fuzzing logic to each parameter.
 
-    Raises:
+     Raises:
         ValueError: If no parameters are identified in the URL.
 
-    This function assumes the existence of methods `parameters(url)` and
-    `validator(dangerous_characters, parameter, url)`, but their specific
-    implementations are not included in this code snippet.
+     This function assumes the existence of methods `parameters(url)` and
+     `validator(dangerous_characters, parameter, url)`, but their specific
+     implementations are not included in this code snippet.
 
-    **Important Notes:**
+     **Important Notes:**
 
-    - Using threads for fuzzing is generally discouraged due to potential
+     - Using threads for fuzzing is generally discouraged due to potential
       instability and increased complexity.
-    - The `dangerous_characters` list and the custom sorting implemented
+     - The `dangerous_characters` list and the custom sorting implemented
       using `bubble_sort` might require adjustments based on your specific
       fuzzing context and application.
-    
-       return data """
+     """
+      
+    return data 
 
 
 
