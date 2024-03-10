@@ -7,7 +7,7 @@ import json
 from Waf import Waf_Detect
 from argparse import ArgumentParser
 import subprocess
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 from concurrent.futures import ThreadPoolExecutor
 
 
@@ -214,7 +214,23 @@ if crawl:
     Returns:
         list: A list of parameter names found in the URL.
     """
+    # Parse the URL to extract the query string
+        parsed_url = urlparse(url)
+        query_string = parsed_url.query
+        
+        # Parse the query string to extract parameter names
+        parameters = parse_qs(query_string)
+        parameter_names = list(parameters.keys())
 
+        # Ask the user for the filename
+        output_file = input("Enter the filename to save the parameter names (e.g., parameters.txt): ")
+
+        # Write the parameter names to the output file
+        with open(output_file, 'w') as file:
+            for parameter in parameter_names:
+                file.write(parameter + '\n')
+
+        return parameter_names
 
     def parser(self, url, param_name, value):
       """
