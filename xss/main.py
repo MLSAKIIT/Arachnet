@@ -222,10 +222,8 @@ if crawl:
         parameters = parse_qs(query_string)
         parameter_names = list(parameters.keys())
 
-        # Ask the user for the filename
-        output_file = input("Enter the filename to save the parameter names (e.g., parameters.txt): ")
-
         # Write the parameter names to the output file
+        output_file = "parameters.txt"
         with open(output_file, 'w') as file:
             for parameter in parameter_names:
                 file.write(parameter + '\n')
