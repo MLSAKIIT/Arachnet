@@ -3,9 +3,20 @@ from os import popen, system
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-
-
+import subprocess 
+from optparse import OptionParser
 from colorama import Fore, Back, Style
+
+parser = OptionParser() 
+
+parser.add_option("-u", dest="url", help="scan a single URL. Eg: http://example.com/?id=2")
+parser.add_option('-f', dest='filename', help="specify Filename to scan. Eg: urls.txt etc")
+parser.add_option('-o', dest='output', help="filename to store output. Eg: result.txt")
+
+val,args = parser.parse_args()
+url=val.url
+filename=val.filename
+output=val.output
 
 red = Fore.RED + Style.BRIGHT
 green = Fore.GREEN + Style.BRIGHT
@@ -67,6 +78,15 @@ sensitive_endpoints = [
 
 visited_urls = set()
 
+def read(filename):
+     urls = []
+     try:
+         result = subprocess.run(['cat', filename], capture_output=True)
+         urls = result.stdout
+     except subprocess.CalledProcessError as e:
+         print(f"Error: {e}")
+     return urls
+
 def crawl(url, base_url):
     visited_urls.add(url)
     response = requests.get(url, headers=headers)
@@ -100,9 +120,8 @@ def analyze_response(url, method, status_code, response_text):
     else:
         print(error + f"No IDOR vulnerability found for URL: {url} | Method: {method} | Status Code: {status_code}")
 
-def main():
-    target_url = input(ask + "Enter Your Target's URL: ")
-    base_url = f"{target_url}"
+def main(url):
+    base_url = f"{url}"
     start_url = base_url + "/"
     # Start crawling and spidering from the initial URL
     crawl(start_url, base_url)
@@ -122,7 +141,11 @@ def main():
 if __name__ == '__main__':
   try:
      os.system("clear")
-     main()
-
+     if url and not filename:
+         main(url)
+     else:
+         urls=read(filename)
+         for url in urls:
+             main(url)
   except KeyboardInterrupt:
     print(error + "You Pressed Ctrl + C Goodbye!")
