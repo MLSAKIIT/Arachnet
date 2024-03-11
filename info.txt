@@ -1,0 +1,32 @@
+requests 
+interact with webapp
+
+colorama 
+add colour to terminal output
+
+wafw00f 
+identifying WAF
+
+pyfiglet 
+creates (ASCII art) text based images
+
+ast 
+analyzing and manipulating web source code
+
+regex 
+pattern matching in text
+
+dnspython 
+interaccting with DNS
+
+simplejson 
+simplifies working with JSON data
+
+ip2geotools 
+convert IP addresses to geographical locations
+
+ipwhois 
+provides information about the registrant of an IP address
+
+graphviz 
+creates graphic visualizations

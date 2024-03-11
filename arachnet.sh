@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /bin/bash/env python3
 
 red='\033[0;31m'
 purple='\033[0;35m'
