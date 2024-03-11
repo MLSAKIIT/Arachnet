@@ -13,3 +13,6 @@ ip2geotools
 ipwhois
 wafw00f
 graphviz
+asyncio
+aiohttp
+bs4
